@@ -30,15 +30,18 @@ endef
 
 $(LOG_DIR):
 	mkdir -p $(LOG_DIR)
+	$(call setfacl,rwX,$(LOG_DIR))
 
 $(CACHE_DIR):
 	mkdir -p $(CACHE_DIR)
+	$(call setfacl,rwX,$(CACHE_DIR))
 
 # DEFINE CUSTOM CLEAN TARGETS FOR BOTH DIRECTORIES
 # So the directories will be removed when calling "make clean"
 CLEAN_LOGS_TARGET=$(OVERRIDE_CLEAN_LOGS)clean_logs
 CLEAN_CACHE_TARGET=$(OVERRIDE_CLEAN_CACHE)clean_cache
 WEB_DIR_TARGET=$(OVERRIDE_WEB_DIR)$(WEB_DIR)
+PARAMETERS_TARGET=$(OVERRIDE_PARAMETERS)$(BUILD_DIR)/parameters.yml
 
 # DEFINE CUSTOM BUILD TARGETS FOR BOTH DIRECTORIES
 # So the directories will be created when calling "make"
@@ -46,7 +49,7 @@ CUSTOM_DEFAULT_DEPS+=$(LOG_DIR) $(CACHE_DIR) $(WEB_DIR_TARGET)
 
 # DEFINE CUSTOM BUILD TARGETS FOR BOTH DIRECTORIES
 # So the directories will be created when calling "make"
-CUSTOM_DEFAULT_DEPS+=$(LOG_DIR) $(CACHE_DIR) $(WEB_DIR_TARGET)
+CUSTOM_DEFAULT_DEPS+=$(LOG_DIR) $(CACHE_DIR) $(WEB_DIR_TARGET) $(PARAMETERS_TARGET)
 CUSTOM_CLEAN_DEPS+=$(CLEAN_LOGS_TARGET) $(CLEAN_CACHE_TARGET)
 
 $(CLEAN_LOGS_TARGET):
@@ -56,7 +59,7 @@ $(CLEAN_CACHE_TARGET):
 	rm -rf $(CACHE_DIR)
 
 $(WEB_DIR_TARGET):
-	chown -R $(WWW_USER):$(WWW_GROUP) web
-	chmod $(UMASK_DIR) web
-	$(SETFACL) -R -m u:$(WWW_USER):rx -m g:$(WWW_GROUP):rx -m u:$(CONSOLE_USER):rw -m g:$(CONSOLE_USER_GROUP):rw $(BUILD_DIR)
-	$(SETFACL) -dR -m u:$(WWW_USER):rx -m g:$(WWW_GROUP):rx -m u:$(CONSOLE_USER):rw -m g:$(CONSOLE_USER_GROUP):rw $(BUILD_DIR)
+	$(call setfacl,rwX,$(WEB_DIR))
+
+$(PARAMETERS_TARGET): $(COMPOSER_TARGET)
+	@composer.phar run-script $(COMPOSER_FLAGS) post-update-cmd

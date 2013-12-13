@@ -34,14 +34,18 @@ $(foreach module,$(MODULES), $(eval include $(SELF_DIR)/$(module).mk))
 # TRY TO GET VERSION FROM GIT IF NOT DEFINED
 ifndef BUILD_VERSION
     ifneq ("$(shell git --version 2>/dev/null)", "")
-        GIT_OUTPUT=$(shell cd $(BASE_DIR) && git log --pretty="%H" -n1 HEAD)
-        ifneq ($(firstword $(GIT_OUTPUT)), "fatal:")
+        GIT_OUTPUT=$(shell cd $(BASE_DIR) && git log --pretty="%H" -n1 HEAD 2>/dev/null)
+        ifneq ($(GIT_OUTPUT),)
             BUILD_VERSION=$(GIT_OUTPUT)
         endif
     endif
 endif
 
 # PREPARE PROPERTIES FOR JSON DUMP
+ifdef CUSTOM_PROPERTIES_JSON
+PROP_PREFIX=,
+endif
+
 define PROPERTIES_JSON
 {
   "properties": {
@@ -49,7 +53,7 @@ define PROPERTIES_JSON
     "build_dir":     "$(BUILD_DIR)",
     "vendor_dir":    "$(VENDOR_DIR)",
     "build_version": "$(BUILD_VERSION)",
-    "build_time":    "$(shell date -u +%s)"
+    "build_time":    "$(shell date -u +%s)"$(PROP_PREFIX)
     $(CUSTOM_PROPERTIES_JSON)
   }
 }
@@ -80,18 +84,13 @@ endif
 # Create build directory
 ##
 $(BUILD_TARGET):
-	mkdir -p -m $(UMASK_DIR) $(BUILD_DIR)
-
-	chown $(CONSOLE_USER):$(CONSOLE_USER_GROUP) $(BUILD_DIR)
-
-	$(SETFACL) -R -m u:$(WWW_USER):rx -m u:$(CONSOLE_USER):rw -m g:$(CONSOLE_USER_GROUP):rw $(BUILD_DIR)
-	$(SETFACL) -dR -m u:$(WWW_USER):rx -m u:$(CONSOLE_USER):rw -m g:$(CONSOLE_USER_GROUP):rw $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
+	$(setfacl rwX,$(BUILD_DIR))
 
 ##
 # Write the build properties to a file for later use in your PHP project
 ##
 $(PROPERTIES_TARGET): $(BUILD_TARGET)
-	umask $(UMASK_FILE)
 	@echo $$PROPERTIES_JSON > $(PROPERTIES_FILE)
 	$(call echoc,comment,"Properties written to $(PROPERTIES_FILE)")
 

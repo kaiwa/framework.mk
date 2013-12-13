@@ -20,14 +20,15 @@ COMPOSER_VENDOR_DIR:=$(VENDOR_DIR)
 
 VENDOR_TARGET     = $(OVERRIDE_VENDOR)$(VENDOR_DIR)
 COMPOSER_TARGET   = $(OVERRIDE_COMPOSER)composer.phar
+COMPOSER_FLAGS    = --no-interaction
 
 ##
 # Install third-party libraries using composer
 ##
-$(VENDOR_TARGET): | $(COMPOSER_TARGET)
+$(VENDOR_TARGET): $(CUSTOM_VENDOR_TARGET_DEPS) | $(COMPOSER_TARGET)
 	mkdir -p $(VENDOR_DIR) -m $(UMASK_DIR)
 	chown $(CONSOLE_USER):$(CONSOLE_USER_GROUP) $(VENDOR_DIR)
-	@composer.phar install $(COMPOSER_FLAGS)
+	@composer.phar install $(COMPOSER_FLAGS) --prefer-dist
 
 ##
 # Install composer dependency manager

@@ -112,6 +112,15 @@ define headline
   $(call echoc,headline, $(1) ,\\n,\\n)
 endef
 
+# Ease ACL pain
+
+define setfacl
+  chmod $(UMASK_DIR) $(2)
+  $(SETFACL) -bR $(2)
+  $(SETFACL) -R -m u:$(WWW_USER):$(1) -m g:$(WWW_GROUP):$(1) -m u:$(CONSOLE_USER):$(1) -m g:$(CONSOLE_USER_GROUP):$(1) $(2);
+  $(SETFACL) -dR -m u:$(WWW_USER):$(1) -m g:$(WWW_GROUP):$(1) -m u:$(CONSOLE_USER):$(1) -m g:$(CONSOLE_USER_GROUP):$(1) $(2);
+endef
+
 # First target must be defined here to set correct default entry point
 DEFAULT_TARGET=$(OVERRIDE_DEFAULT)default
 $(OVERRIDE_INIT)init:$(DEFAULT_TARGET)
