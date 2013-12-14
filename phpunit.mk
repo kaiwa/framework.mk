@@ -12,11 +12,9 @@
 ##
 
 TEST_OUTFILE=$(BUILD_DIR)/phpunit.xml
-TEST_CONFIGFILE=$(BASE_DIR)
 # We output the coverage in the same go, otherwise
 # it would be required to run all the tests again
 TEST_FLAGS= \
-  -c $(TEST_CONFIGFILE) \
   --log-junit=$(TEST_OUTFILE) \
   --coverage-clover=$(BUILD_DIR)/coverage.xml \
   --coverage-html=$(BUILD_DIR)/coverage.html \

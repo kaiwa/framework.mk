@@ -11,6 +11,9 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
 ##
 
+# CREATE CUSTOM SECRET FOR USE IN PARAMETERS FILE
+
+
 # DEFINE APPLICATION LOG AND CACHE DIRECTORY
 #
 # This can be overwritten on the command line by calling make with
@@ -61,5 +64,5 @@ $(CLEAN_CACHE_TARGET):
 $(WEB_DIR_TARGET):
 	$(call setfacl,rwX,$(WEB_DIR))
 
-$(PARAMETERS_TARGET): $(COMPOSER_TARGET)
-	@composer.phar run-script $(COMPOSER_FLAGS) post-update-cmd
+$(PARAMETERS_TARGET): $(VENDOR_TARGET)
+	@composer.phar run-script $(COMPOSER_FLAGS) post-install-cmd

@@ -25,7 +25,7 @@ COMPOSER_FLAGS    = --no-interaction
 ##
 # Install third-party libraries using composer
 ##
-$(VENDOR_TARGET): $(CUSTOM_VENDOR_TARGET_DEPS) | $(COMPOSER_TARGET)
+$(VENDOR_TARGET): $(PROPERTIES_TARGET) $(CUSTOM_VENDOR_TARGET_DEPS) | $(COMPOSER_TARGET)
 	mkdir -p $(VENDOR_DIR) -m $(UMASK_DIR)
 	chown $(CONSOLE_USER):$(CONSOLE_USER_GROUP) $(VENDOR_DIR)
 	@composer.phar install $(COMPOSER_FLAGS) --prefer-dist
