@@ -11,4 +11,4 @@ ifndef doctrine_target_deps
 endif
 
 $(doctrine_target): $(doctrine_target_deps)
-	php $(doctrine_console) doctrine_database:create
+	php $(doctrine_console) doctrine:database:create
