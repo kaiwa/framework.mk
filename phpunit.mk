@@ -11,32 +11,59 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
 ##
 
-TEST_OUTFILE=$(BUILD_DIR)/phpunit.xml
-# We output the coverage in the same go, otherwise
-# it would be required to run all the tests again
-TEST_FLAGS= \
-  --log-junit=$(TEST_OUTFILE) \
-  --coverage-clover=$(BUILD_DIR)/coverage.xml \
-  --coverage-html=$(BUILD_DIR)/coverage.html \
-  --colors
-TEST_DEPS=$(TEST_OUTFILE)
-TEST_CMD=$(BIN_DIR)/phpunit
-TEST_DIR=$(SRC_DIR)
+ifndef phpunit_outfile
+  phpunit_outfile = $(build_dir)/phpunit.xml
+endif
 
-# Define a "test" target in order to be able to
-# call "make test"
-TEST_TARGET=$(OVERRIDE_TEST)test
-$(TEST_TARGET): $(TEST_DEPS)
+ifndef phpunit_target
+  phpunit_target = $(phpunit_outfile)
+endif
 
-# Define a target for the test results
-$(TEST_OUTFILE):
-	$(TEST_CMD) $(TEST_FLAGS) $(TEST_DIR)
+ifndef phpunit_target_deps
+  phpunit_target_deps=$(custom_phpunit_target_deps)
+endif
 
-# Add a clean target for the test output
-CLEAN_TEST_TARGET=$(OVERRIDE_CLEAN_TEST)clean_test
-CUSTOM_CLEAN_DEPS+=$(CLEAN_TEST_TARGET)
+ifndef phpunit_cmd
+  phpunit_cmd = $(bin_dir)/phpunit
+endif
 
-$(CLEAN_TEST_TARGET): $(CUSTOM_CLEAN_TEST_DEPS)
-	rm -f $(TEST_OUTFILE)
-	rm -f $(BUILD_DIR)/coverage.xml
-	rm -f $(BUILD_DIR)/coverage.html
+ifndef phpunit_src_dir
+  phpunit_src_dir = $(src_dir)
+endif
+
+ifndef phpunit_flags
+  phpunit_flags = \
+   --log-junit=$(phpunit_outfile) \
+   --coverage-clover=$(build_dir)/coverage.xml \
+   --coverage-html=$(build_dir)/coverage.html
+endif
+
+ifdef test_target
+  # add phpunit to test deps
+  test_target_deps+=phpunit
+else
+  # define test target as alias
+  test: $(phpunit_target) $(custom_test_target_deps)
+endif
+
+# Define overridable phpunit clean target name
+ifndef phpunit_clean_target
+  phpunit_clean_target = clean_phpunit
+endif
+
+ifndef phpunit_clean_target_deps
+  phpunit_clean_target_deps=$(phpunit_custom_clean_target_deps)
+endif
+
+# Add phpunit clean target to "make clean"
+custom_clean_target_deps+=$(phpunit_clean_target)
+
+# Define phpunit clean target
+$(phpunit_clean_target): $(phpunit_clean_target_deps)
+	rm -f $(phpunit_outfile)
+	rm -f $(build_dir)/coverage.xml
+	rm -f $(build_dir)/coverage.html
+
+# Define phpunit target
+$(phpunit_target): $(phpunit_target_deps)
+	$(phpunit_cmd) $(phpunit_flags) $(phpunit_src_dir)

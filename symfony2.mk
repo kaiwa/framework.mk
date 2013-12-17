@@ -11,58 +11,80 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
 ##
 
-# CREATE CUSTOM SECRET FOR USE IN PARAMETERS FILE
+ifndef sf_web_dir
+  sf_web_dir=$(base_dir)/web
+endif
 
+ifndef sf_log_dir
+  sf_log_dir=$(base_dir)/app/logs
+endif
 
-# DEFINE APPLICATION LOG AND CACHE DIRECTORY
-#
-# This can be overwritten on the command line by calling make with
-#   make LOG_DIR=... CACHE_DIR=...
-#
-WEB_DIR=$(BASE_DIR)/web
-LOG_DIR=$(BASE_DIR)/app/logs
-CACHE_DIR=$(BASE_DIR)/app/cache
+ifndef cache_dir
+ sf_cache_dir=$(base_dir)/app/cache
+endif
 
-# STORE BOTH SETTINGS TO THE PROPERTIES JSON FILE FOR LATER USE
-# IN THE PHP APPLICATION. READ THEM IN YOUR APP WITH
-# json_decode(file_get_contents('build/properties.json'))
-define CUSTOM_PROPERTIES_JSON
- "log_dir":   "$(LOG_DIR)",
- "cache_dir": "$(CACHE_DIR)"
-endef
+ifndef sf_parameters_file
+  sf_parameters_file=$(build_dir)/parameters.yml
+endif
 
-$(LOG_DIR):
-	mkdir -p $(LOG_DIR)
-	$(call setfacl,rwX,$(LOG_DIR))
+custom_properties_json+=, "log_dir": "$(sf_log_dir)"
+custom_properties_json+=, "cache_dir": "$(sf_cache_dir)"
 
-$(CACHE_DIR):
-	mkdir -p $(CACHE_DIR)
-	$(call setfacl,rwX,$(CACHE_DIR))
+ifndef sf_log_dir_target
+  sf_log_dir_target=$(sf_log_dir)
+endif
 
-# DEFINE CUSTOM CLEAN TARGETS FOR BOTH DIRECTORIES
-# So the directories will be removed when calling "make clean"
-CLEAN_LOGS_TARGET=$(OVERRIDE_CLEAN_LOGS)clean_logs
-CLEAN_CACHE_TARGET=$(OVERRIDE_CLEAN_CACHE)clean_cache
-WEB_DIR_TARGET=$(OVERRIDE_WEB_DIR)$(WEB_DIR)
-PARAMETERS_TARGET=$(OVERRIDE_PARAMETERS)$(BUILD_DIR)/parameters.yml
+ifndef sf_cache_dir_target
+  sf_cache_dir_target=$(sf_cache_dir)
+endif
 
-# DEFINE CUSTOM BUILD TARGETS FOR BOTH DIRECTORIES
-# So the directories will be created when calling "make"
-CUSTOM_DEFAULT_DEPS+=$(LOG_DIR) $(CACHE_DIR) $(WEB_DIR_TARGET)
+$(sf_log_dir_target):
+	mkdir -p -m $(umask_dir) $(sf_log_dir)
+	$(call setfacl,rwX,$(sf_log_dir))
 
-# DEFINE CUSTOM BUILD TARGETS FOR BOTH DIRECTORIES
-# So the directories will be created when calling "make"
-CUSTOM_DEFAULT_DEPS+=$(LOG_DIR) $(CACHE_DIR) $(WEB_DIR_TARGET) $(PARAMETERS_TARGET)
-CUSTOM_CLEAN_DEPS+=$(CLEAN_LOGS_TARGET) $(CLEAN_CACHE_TARGET)
+$(sf_cache_dir_target):
+	mkdir -p -m $(umask_dir) $(sf_cache_dir)
+	$(call setfacl,rwX,$(sf_cache_dir))
 
-$(CLEAN_LOGS_TARGET):
-	rm -rf $(LOG_DIR)
+ifndef sf_clean_logs_target
+  sf_clean_logs_target=clean_logs
+endif
 
-$(CLEAN_CACHE_TARGET):
-	rm -rf $(CACHE_DIR)
+ifndef sf_clean_cache_target
+  sf_clean_cache_target=clean_cache
+endif
 
-$(WEB_DIR_TARGET):
-	$(call setfacl,rwX,$(WEB_DIR))
+ifndef sf_web_dir_target
+  sf_web_dir_target=$(sf_web_dir)
+endif
 
-$(PARAMETERS_TARGET): $(VENDOR_TARGET)
-	@composer.phar run-script $(COMPOSER_FLAGS) post-install-cmd
+ifndef sf_parameters_target
+  sf_parameters_target=$(build_dir)/parameters.yml
+endif
+
+ifndef sf_parameters_target_deps
+  sf_parameters_target_deps=$(vendor_target)
+endif
+
+custom_default_target_deps+=$(sf_log_dir_target) $(sf_cache_dir_target) $(sf_web_dir_target) $(sf_parameters_target)
+custom_clean_target_deps+=$(sf_clean_logs_target) $(sf_clean_cache_target)
+
+$(sf_clean_logs_target): $(sf_clean_logs_target_deps)
+	rm -rf $(sf_log_dir)
+
+$(sf_clean_cache_target): $(sf_clean_cache_target_deps)
+	rm -rf $(sf_cache_dir)
+
+$(sf_web_dir_target): $(sf_web_dir_target_deps)
+	$(call setfacl,rwX,$(sf_web_dir))
+
+ifndef composer_run_script_flags
+  composer_run_script_flags = --ansi
+endif
+
+ifdef no-interaction
+  composer_run_script_flags += --no-interaction
+endif
+
+$(sf_parameters_target): $(sf_parameters_target_deps)
+	@composer.phar run-script $(composer_run_script_flags) post-install-cmd

@@ -11,44 +11,79 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
 ##
 
-ifneq ($(shell command -v composer.phar --version 2>/dev/null),)
-  COMPOSER_INSTALLED=1
+# The directory to check for if the vendor libraries are installed
+ifndef vendor_dir
+  vendor_dir=$(base_dir)/vendor
 endif
 
-# SET VENDOR DIR FOR COMPOSER
-COMPOSER_VENDOR_DIR:=$(VENDOR_DIR)
+ifneq ($(shell command -v composer.phar --version 2>/dev/null),)
+  composer_installed=1
+endif
 
-VENDOR_TARGET     = $(OVERRIDE_VENDOR)$(VENDOR_DIR)
-COMPOSER_TARGET   = $(OVERRIDE_COMPOSER)composer.phar
-COMPOSER_FLAGS    = --no-interaction
+# SET VENDOR DIR ENVIRONMENT VARIABLE FOR COMPOSER
+COMPOSER_VENDOR_DIR:=$(vendor_dir)
+
+ifndef vendor_target
+  vendor_target = $(vendor_dir)
+endif
+
+ifndef vendor_target_deps
+  vendor_target_deps = $(properties_target) $(custom_vendor_target_deps) | $(composer_target)
+endif
+
+ifndef composer_install_flags
+  composer_install_flags = --ansi --prefer-dist
+endif
+
+ifdef no-interaction
+  composer_install_flags += --no-interaction
+endif
 
 ##
 # Install third-party libraries using composer
 ##
-$(VENDOR_TARGET): $(PROPERTIES_TARGET) $(CUSTOM_VENDOR_TARGET_DEPS) | $(COMPOSER_TARGET)
-	mkdir -p $(VENDOR_DIR) -m $(UMASK_DIR)
-	chown $(CONSOLE_USER):$(CONSOLE_USER_GROUP) $(VENDOR_DIR)
-	@composer.phar install $(COMPOSER_FLAGS) --prefer-dist
+$(vendor_target): $(vendor_target_deps)
+	mkdir -p $(vendor_dir) -m $(umask_dir)
+	chown $(console_user):$(console_user_group) $(vendor_dir)
+	@composer.phar install $(composer_install_flags)
+
+ifndef composer_target
+  composer_target = composer.phar
+endif
+
+ifndef composer_target_deps
+  composer_target_deps = $(custom_composer_target_deps)
+endif
 
 ##
 # Install composer dependency manager
 ##
-$(COMPOSER_TARGET):
+$(composer_target): $(composer_target_deps)
 #       Even if the file is not found, check if composer might be installed globally
         ifdef COMPOSER_INSTALLED
 		$(call echoc,comment,Global composer installation detected.)
         else
 		$(call echoc,info,Could not find composer. Downloading.)
 		@curl -sS "https://getcomposer.org/installer" | php
-		chown $(CONSOLE_USER):$(CONSOLE_USER_GROUP) composer.phar
-		chmod $(UMASK_EXE) composer.phar
+		chown $(console_user):$(console_user_group) composer.phar
+		chmod $(umask_exe) composer.phar
         endif
 
 #
-# Add composer purge target to default purge targets
+# Composer Purge target
 #
-COMPOSER_PURGE_TARGET=$(OVERRIDE_COMPOSER_PURGE)purge_composer
-CUSTOM_PURGE_DEPS+=$(COMPOSER_PURGE_TARGET)
-$(COMPOSER_PURGE_TARGET):
+
+ifndef composer_purge_target
+  composer_purge_target = purge_composer
+endif
+
+ifndef composer_purge_target_deps
+  composer_purge_target_deps = $(custom_composer_purge_target_deps)
+endif
+
+$(composer_purge_target): $(composer_purge_target_deps)
 	rm -f composer.phar
-	rm -rf $(VENDOR_DIR)
+	rm -rf $(vendor_dir)
+
+# Add composer purge target to main purge target
+custom_purge_target_deps+=$(composer_purge_target)

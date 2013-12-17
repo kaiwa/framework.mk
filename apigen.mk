@@ -11,15 +11,33 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
 ##
 
-APIDOC_DIR=$(BUILD_DIR)/apidoc
-APIGEN_CONFIG_FILE=$(BASE_DIR)/apigen.neon.dist
+ifndef apigen_output_dir
+  apigen_output_dir=$(build_dir)/apidoc
+endif
 
-APIDOC_TARGET=$(APIGEN_OVERRIDE)apidoc
-APIDOC_EXCLUDE=--exclude=test/ --exclude=tests/* --exclude=Test/* --exclude=Tests/* --exclude=*Test.php
-APIDOC_FLAGS=$(APIDOC_EXCLUDE) --todo --charset utf8 --title "$(PROJECT_NAME) (build $(BUILD_VERSION))"
-APIGEN_TARGET=$(APIGEN_OVERRIDE)$(APIDOC_DIR)
+ifndef apigen_source_dir
+  apigen_source_dir=$(base_dir)/src
+endif
 
-$(APIGEN_TARGET): $(APIDOC_TARGET)
+ifndef apigen_config_file
+  apigen_config_file=$(base_dir)/apigen.neon.dist
+endif
 
-$(APIDOC_TARGET): $(BUILD_TARGET)
-	apigen --source $(SRC_DIR) --destination $(APIDOC_DIR) $(APIDOC_FLAGS)
+ifndef apigen_target
+  apigen_target=$(apigen_output_dir)
+endif
+
+ifndef apigen_exclude
+  apigen_exclude=--exclude=test/ --exclude=tests/* --exclude=Test/* --exclude=Tests/* --exclude=*Test.php --exclude=specs/* --exclude=Specs/* --exclude=*Spec.php
+endif
+
+ifndef apigen_flags
+  apigen_flags=$(apigen_exclude) --todo --charset utf8 --title "$(project_name) (build $(build_version))"
+endif
+
+ifndef apigen_binary
+  apigen_bin=apigen
+endif
+
+$(apigen_target): $(apigen_target_deps)
+	$(apigen_binary) --source $(apigen_source_dir) --destination $(apigen_output_dir) $(apigen_flags)
