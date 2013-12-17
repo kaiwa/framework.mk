@@ -66,7 +66,8 @@ ifndef sf_parameters_target_deps
   sf_parameters_target_deps=$(vendor_target)
 endif
 
-custom_default_target_deps+=$(sf_log_dir_target) $(sf_cache_dir_target) $(sf_web_dir_target) $(sf_parameters_target)
+custom_prepare_target_deps+=$(sf_log_dir_target) $(sf_cache_dir_target) $(sf_web_dir_target)
+custom_default_target_deps+=$(sf_parameters_target)
 custom_clean_target_deps+=$(sf_clean_logs_target) $(sf_clean_cache_target)
 
 $(sf_clean_logs_target): $(sf_clean_logs_target_deps)

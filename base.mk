@@ -46,7 +46,7 @@ ifndef default_target
   default_target = build
 endif
 ifndef prepare_target
-  prepare_target = $(build_dir)
+  prepare_target = prepare
 endif
 ifndef properties_target
   properties_target = $(properties_file)
@@ -58,7 +58,6 @@ ifndef purge_target
   purge_target = purge
 endif
 
-
 ifndef default_target_deps
   default_target_deps = $(prepare_target) $(properties_target) $(custom_default_target_deps)
 endif
@@ -69,16 +68,26 @@ endif
 $(default_target): $(default_target_deps)
 	$(call echoc,success,\\n$(project_name) is ready.\\n)
 
+ifndef build_dir_target
+  build_dir_target=$(build_dir)
+endif
+
+ifndef build_dir_target_deps
+  build_dir_target_deps=$(custom_build_dir_target_deps)
+endif
+
+$(build_dir_target): $(build_dir_target_deps)
+	mkdir -p $(build_dir)
+	$(setfacl rwX,$(build_dir))
+
 ##
 # Create build directory
 ##
 ifndef prepare_target_deps
-  prepare_target_deps = $(custom_prepare_target_deps)
+  prepare_target_deps = $(build_dir_target) $(custom_prepare_target_deps)
 endif
 
 $(prepare_target): $(prepare_target_deps)
-	mkdir -p $(build_dir)
-	$(setfacl rwX,$(build_dir))
 
 ##
 # Write the build properties to a file for later use in your PHP project
